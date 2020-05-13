@@ -1,0 +1,238 @@
+---
+title: "Project 1"
+author: "Gaurav Handa"
+output: html_document
+---
+
+```{r}
+
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(treemap)
+
+setwd("C:/Users/grhan/OneDrive/Desktop/Gaurav/Gaurav/Visualization/Project 1")
+
+#Creating region
+NorthEast <- c("Connecticut", "Maine", "Massachusetts", "New Hampshire", "Rhode Island", "Vermont", "New Jersey", "New York","Pennsylvania")
+MidWest <- c("Illinois", "Indiana", "Michigan", "Ohio", "Wisconsin", "Iowa", "Kansas", "Minnesota", "Missouri", "Nebraska", "North Dakota", "South Dakota")
+South <- c("Delaware", "Florida", "Georgia", "Maryland", "North Carolina", "South Carolina", "Virginia", "District of Columbia", "West Virginia", "Alabama", "Kentucky", "Mississippi", "Tennessee", "Arkansas", "Louisiana", "Oklahoma", "Texas","Puerto Rico","Virgin Islands")
+West <- c("Arizona", "Colorado", "Idaho", "Montana", "Nevada", "New Mexico", "Utah", "Wyoming", "Alaska", "California", "Hawaii", "Oregon", "Washington")
+
+#Importing dataset
+FMarkets <- read.csv("C:/Users/grhan/OneDrive/Desktop/Gaurav/Gaurav/Visualization/Project 1/fmarket.csv", na.strings="", stringsAsFactors=FALSE)
+
+#deleting columns not required 
+Farm_Markets <- select(FMarkets, -c(Website,Facebook,Twitter,Youtube,OtherMedia,FMID,street, city, County,zip, Season1Time, Season2Date, Season2Time, Season3Date, Season3Time, Season4Date, Season4Time, x,y,Location,updateTime))
+
+Farm_Markets$State <- str_to_title(Farm_Markets$State)
+
+#adding regions to markets
+Farm_Markets <- Farm_Markets %>%
+  mutate(Region = ifelse(State %in% NorthEast,"NorthEast",ifelse(State %in% MidWest,"MidWest",ifelse(State %in% South,"South","West"))))
+
+#Summarizing 
+Reg_Markets <- Farm_Markets %>%
+  select(MarketName, State) %>%
+  group_by(Region = Farm_Markets$Region) %>%
+  summarise(Total = n())
+
+ggplot(Reg_Markets, mapping = aes(x=reorder(Reg_Markets$Region,-Reg_Markets$Total), y=Reg_Markets$Total)) + geom_bar(fill = "deeppink3", stat = "identity", width = 0.5) + labs(title = "Visualisation by region", x="Regions", y="Number of Markets") + theme_minimal() + scale_y_continuous(breaks=seq(0,2500,500))
+ggsave("Region.png", dpi = 500)
+
+# plotting the treemap
+Farm_Markets <- Farm_Markets %>%
+  mutate(Value = 1)
+
+treemap(dtf = Farm_Markets,
+        index = c("State"),
+        vSize = "Value",
+        palette = "RdPu",
+        type = "value",
+        title = "Visualisation by State")
+ggsave("State.png", dpi = 500)
+```
+
+
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+
+#Importing the dataset
+FMarkets <- read.csv("C:/Users/grhan/OneDrive/Desktop/Gaurav/Gaurav/Visualization/Project 1/fmarket.csv", na.strings="", stringsAsFactors=FALSE)
+#Removing columns 
+Farm_Markets <- select(FMarkets, -c(Website,Facebook,Twitter,Youtube,OtherMedia,FMID,street, city, County,zip, Season1Time, Season2Date, Season2Time, Season3Date, Season3Time, Season4Date, Season4Time, x,y,Location,updateTime))
+
+#Creating the sum of products 
+Farm_Markets$PlantBasedFoods <- as.numeric(ifelse(str_to_upper(Farm_Markets$Organic) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Herbs) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Vegetables) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Mushrooms) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Tofu) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Grains) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Coffee) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Beans) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Fruits) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Nuts) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Maple) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Jams) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Juices) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$WildHarvested) == "Y", 1,0))
+
+Farm_Markets$MeatDairyFood <- as.numeric(ifelse(str_to_upper(Farm_Markets$Meat) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Eggs) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Seafood) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Poultry) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Cheese) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$PetFood) == "Y", 1,0))
+
+Farm_Markets$BakeryAndPreparedFoods <- as.numeric(ifelse(str_to_upper(Farm_Markets$Prepared) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Bakedgoods) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Wine) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Honey) == "Y", 1,0))
+
+Farm_Markets$TreeProducts <- ifelse(str_to_upper(Farm_Markets$Nursery) == "Y", 1,0) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Crafts) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Plants) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Soap) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Trees) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Flowers) == "Y", 1,0))
+  
+#dataframe 
+p_Market <- data.frame(TypeOfProduct = character(), Total = integer())
+p_Filtered <- Farm_Markets %>%
+  filter(!is.na(PlantBasedFoods) & !is.na(MeatDairyFood) & !is.na(BakeryAndPreparedFoods) &!is.na(TreeProducts))
+p_Market <- rbind(p_Market, data.frame(TypeOfProduct="Plant Based Foods",Total=sum(p_Filtered$PlantBasedFoods)))
+p_Market <- rbind(p_Market, data.frame(TypeOfProduct="Meat & Dairy Based Foods",Total=sum(p_Filtered$MeatDairyFood)))
+p_Market <- rbind(p_Market, data.frame(TypeOfProduct="Bakery And Prepared Foods",Total=sum(p_Filtered$BakeryAndPreparedFoods)))
+p_Market <- rbind(p_Market, data.frame(TypeOfProduct="Tree Products",Total=sum(p_Filtered$TreeProducts)))
+
+ggplot(p_Market, mapping = aes(x=reorder(p_Market$TypeOfProduct, Total),y=p_Market$Total)) + coord_flip() + geom_bar(stat = "identity", fill="deeppink3") + labs(x="Type of Product", y="Total", title = "Product Categories ") + theme_minimal()
+
+Indi_Products <- Farm_Markets %>%
+  select(Organic,Bakedgoods,Cheese,Crafts,Flowers,Fruits,Coffee,Jams,Maple,Beans,Grains,Meat,Plants,Tofu,PetFood,Mushrooms,Juices,Wine,Trees,Soap,Prepared,Poultry,Eggs,Herbs,Seafood,Nursery,Nuts,Vegetables,Honey,WildHarvested)
+
+#dataframe for product 
+Indi_Products[Indi_Products=="Y"] <- 1
+Indi_Products[Indi_Products!="1"] <- NA
+Indi_Products <- sapply( Indi_Products, as.numeric )
+Indi_Products <- colSums(Indi_Products,na.rm = T)
+Indi_Products <- as.data.frame(as.table(Indi_Products))
+colnames(Indi_Products) <- c("Product","Total")
+
+ggplot(Indi_Products, mapping = aes(x=reorder(Indi_Products$Product,Indi_Products$Total), y=Indi_Products$Total)) + geom_bar(stat = "identity", fill="deeppink3") + coord_flip() + labs(x="Products",y="Total", title = "Products Visualisation")  + scale_y_continuous(breaks=seq(0,6000,by = 1000))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+F_Markets <- read.csv("C:/Users/grhan/OneDrive/Desktop/Gaurav/Gaurav/Visualization/Project 1/fmarket.csv", na.strings="", stringsAsFactors=FALSE)
+#Removing columns 
+Farm_Markets <- select(F_Markets, -c(Website,Facebook,Twitter,Youtube,OtherMedia,FMID,street, city, County,zip, Season1Time, Season2Date, Season2Time, Season3Date, Season3Time, Season4Date, Season4Time, x,y,Location,updateTime))
+
+# dataframe for payment 
+Pay_Methods <- data.frame(Pay_Methods = character(), Total = integer())
+Pay_Methods <- rbind(Pay_Methods, data.frame(Payment_Method = "Credit", Total = nrow(F_Markets[F_Markets$Credit == "Y",])))
+Pay_Methods <- rbind(Pay_Methods, data.frame(Payment_Method = "WIC", Total = nrow(F_Markets[F_Markets$WIC == "Y",])))
+Pay_Methods <- rbind(Pay_Methods, data.frame(Payment_Method = "WICCash", Total = nrow(F_Markets[F_Markets$WICcash == "Y",])))
+Pay_Methods <- rbind(Pay_Methods, data.frame(Payment_Method = "SFMNP", Total = nrow(F_Markets[F_Markets$SFMNP == "Y",])))
+Pay_Methods <- rbind(Pay_Methods, data.frame(Payment_Method = "SNAP", Total = nrow(F_Markets[F_Markets$SNAP == "Y",])))
+
+Pay_Methods$Percentage <- paste(round((Pay_Methods$Total/sum(Pay_Methods$Total))*100,1),"%", sep = "")
+
+#pie Chart
+pie(x = Pay_Methods$Total, labels = paste(Pay_Methods$PaymentMethod,Pay_Methods$Percentage), main = "Payment Methods", col = c("deeppink","deeppink1","deeppink2","deeppink3","deeppink4") )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+library(reshape2)
+
+
+FMarkets <- read.csv("C:/Users/grhan/OneDrive/Desktop/Gaurav/Gaurav/Visualization/Project 1/fmarket.csv", na.strings="", stringsAsFactors=FALSE)
+#Removing columns 
+Farm_Markets <- select(FMarkets, -c(Website,Facebook,Twitter,Youtube,OtherMedia,FMID,street, city, County,zip, Season1Time, Season2Date, Season2Time, Season3Date, Season3Time, Season4Date, Season4Time, x,y,Location,updateTime))
+
+# adding products in 4 groups
+Farm_Markets$PlantBasedFoods <- as.numeric(ifelse(str_to_upper(Farm_Markets$Organic) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Herbs) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Vegetables) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Mushrooms) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Tofu) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Grains) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Coffee) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Beans) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Fruits) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Nuts) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Maple) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Jams) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Juices) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$WildHarvested) == "Y", 1,0))
+
+Farm_Markets$MeatDairyFood <- as.numeric(ifelse(str_to_upper(Farm_Markets$Meat) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Eggs) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Seafood) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Poultry) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Cheese) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$PetFood) == "Y", 1,0))
+
+Farm_Markets$BakeryAndPreparedFoods <- as.numeric(ifelse(str_to_upper(Farm_Markets$Prepared) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Bakedgoods) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Wine) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Honey) == "Y", 1,0))
+
+Farm_Markets$TreeProducts <- ifelse(str_to_upper(Farm_Markets$Nursery) == "Y", 1,0) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Crafts) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Plants) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Soap) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Trees) == "Y", 1,0)) +
+  as.numeric(ifelse(str_to_upper(Farm_Markets$Flowers) == "Y", 1,0))
+
+#Assigning regions to states 
+Markets <- Farm_Markets %>%
+  mutate(Region = ifelse(State %in% NorthEast,"NorthEast",ifelse(State %in% MidWest,"MidWest",ifelse(State %in% South,"South","West")))) %>%
+  select(Region,PlantBasedFoods, MeatDairyFood, TreeProducts, BakeryAndPreparedFoods)
+
+SummaryMarkets <- Markets %>%
+  group_by(Region) %>%
+  summarise(TotalPlantBased = sum(PlantBasedFoods, na.rm = TRUE), TotalMeatAndDairyBased = sum(MeatDairyFood, na.rm = TRUE), PreparedFood = sum(BakeryAndPreparedFoods, na.rm = TRUE), TotalTreeProducts = sum(TreeProducts, na.rm = T))
+
+#Creating dataframe 
+M_Summary <- melt(SummaryMarkets, id.vars = c("Region"))
+colnames(M_Summary) <- c("Region", "Product Category", "Total")
+M_Summary$`Product Category` <- as.character(M_Summary$`Product Category`)
+M_Summary$`Product Category`[as.character(M_Summary$`Product Category`) == "TotalPlantBased"] <- 'Plant Based Products'
+M_Summary$`Product Category`[as.character(M_Summary$`Product Category`) == 'TotalMeatAndDairyBased'] <- 'Meat & Dairy Based Products'
+M_Summary$`Product Category`[M_Summary$`Product Category` == 'PreparedFood'] <- 'Bakery & Prepared Food Products'
+M_Summary$`Product Category`[M_Summary$`Product Category` == 'TotalTreeProducts'] <- 'Tree Products'
+
+ggplot(M_Summary, mapping = aes(fill=M_Summary$`Product Category` ,x=reorder(M_Summary$`Product Category`,-M_Summary$Total), y = M_Summary$Total)) + geom_bar(position="dodge", stat="identity") + facet_wrap(~M_Summary$Region) + theme_minimal() +  
+  scale_fill_manual(values = c("Plant Based Products" = "deeppink1", "Meat & Dairy Based Products" = "deeppink2", "Bakery & Prepared Food Products" = "deeppink3", "Tree Products" = "deeppink4")) + theme(axis.text.x=element_blank()) + labs(x="",y="Total", fill = "Products Categories")
+
+```
+
